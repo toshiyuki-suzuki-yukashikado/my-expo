@@ -1,10 +1,46 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import {useEffect, useState} from 'react';
+import {Camera, CameraType} from "expo-camera";
 
 export default function App() {
+  const [permission, setPermission] = useState<{
+    isGranted: boolean
+    isChecked: boolean
+  }>({
+    isGranted: false,
+    isChecked: false
+  })
+  useEffect(() => {
+    Camera.getCameraPermissionsAsync().then(({status}) => {
+      setPermission({
+        isGranted: status === 'granted',
+        isChecked: true
+      })
+    })
+  }, [])
+  useEffect(() => {
+    if (permission.isChecked && !permission.isGranted) {
+      Camera.requestCameraPermissionsAsync().then(({status}) => {
+        setPermission({
+          isGranted: status === 'granted',
+          isChecked: true
+        })
+      })
+    }
+  }, [permission])
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+     {permission.isGranted && (
+        <Camera
+          type={CameraType.back}
+          ratio={'16:9'}
+          style={styles.camera}
+          onBarCodeScanned={(scannerResult)=>{
+            console.log(scannerResult)
+          }} />
+       )}
       <StatusBar style="auto" />
     </View>
   );
@@ -13,8 +49,8 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
+  camera: {
+    flex: 1,
+  }
 });
